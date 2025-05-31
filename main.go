@@ -1,40 +1,92 @@
 package main
 
 import (
+	"encoding/json"
+	"os"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-// TODO dynamically add tasks
-// TODO store tasks in SQLite db? Or JSON (maybe JSON so shareable extract)
-// TODO use vim controls to navigate, but also make something for arrow keys as well
+type Board struct {
+	Title   string   `json:"title"`
+	Columns []Column `json:"columns"`
+}
+
+type Column struct {
+	Title string `json:"title"`
+	Cards []Card `json:"cards"`
+}
+
+type Card struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Shortcut    string `json:"shortcut"`
+}
+
+var boardData Board
+
+var columns []*tview.List
+var currentFocus int = 0
+
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil || !os.IsNotExist(err)
+
+}
+
+func loadData() {
+	filePath := "./tasks.json" // TODO set this up as a cli input to potentially load different boards from different JSONs
+
+	var file *os.File
+	var err error
+	if !fileExists(filePath) {
+		file, err = os.Create(filePath)
+	} else {
+		file, err = os.Open("tasks.json")
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer file.Close()
+	json.NewDecoder(file).Decode(&boardData)
+}
+
 func main() {
+	loadData()
+
 	app := tview.NewApplication()
+	board := tview.NewFlex().SetDirection(tview.FlexColumn)
 
-	backlogColumn := tview.NewList()
-	backlogColumn.SetBorder(true)
-	backlogColumn.SetTitle(" Backlog ")
+	for i, col := range boardData.Columns {
+		list := tview.NewList()
+		list.SetBorder(true)
+		list.SetTitle(col.Title)
 
-	backlogColumn.AddItem("Task 1", "This is a description", '1', nil)
-	backlogColumn.AddItem("Task 2", "THIS IS A TEST", '2', nil)
+		for _, card := range col.Cards {
+			shortcutRune := []rune(card.Shortcut)
 
-	inProgressColumn := tview.NewList()
-	inProgressColumn.SetBorder(true)
-	inProgressColumn.SetTitle(" In progress ")
+			var r rune
+			if len(shortcutRune) > 0 {
+				r = shortcutRune[0]
+			} else {
+				r = 0
+			}
 
-	inProgressColumn.AddItem("Task 2", "Another very detailed task todo", '1', nil)
+			list.AddItem(card.Title, card.Description, r, nil)
+		}
 
-	doneColumn := tview.NewList()
-	doneColumn.SetBorder(true)
-	doneColumn.SetTitle(" Ready for Test ")
+		board.AddItem(list, 0, 1, i == 0)
 
-	columns := []*tview.List{backlogColumn, inProgressColumn, doneColumn}
-	currentFocus := 0
-
-	board := tview.NewFlex().SetDirection(tview.FlexColumn).AddItem(backlogColumn, 0, 1, true).AddItem(inProgressColumn, 0, 1, false).AddItem(doneColumn, 0, 1, false)
+		columns = append(columns, list)
+	}
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
+		case 'a':
+			addCard(columns[currentFocus])
 		case 'h':
 			if currentFocus > 0 {
 				currentFocus--
@@ -47,13 +99,29 @@ func main() {
 				currentFocus++
 				app.SetFocus(columns[currentFocus])
 			}
+		case 'r':
+			deleteCard(columns[currentFocus])
 		case 'q':
 			app.Stop()
 		}
 		return event
 	})
 
-	if err := app.SetRoot(board, true).SetFocus(backlogColumn).Run(); err != nil {
+	if err := app.SetRoot(board, true).SetFocus(columns[0]).Run(); err != nil {
 		panic(err)
 	}
 }
+
+func deleteCard(column *tview.List) {
+	currentItemIndex := column.GetCurrentItem()
+	column.RemoveItem(currentItemIndex)
+}
+
+func addCard(column *tview.List) {
+	column.AddItem("HARDCODED ADD", "DETAILED DESCRIPTION", '1', nil)
+}
+
+// func moveCard(column *tview.List, adjacentColumn *tview.List) {
+// 	currentItemIndex := column.GetCurrentItem()
+// 	adjacentColumn.AddItem(columns[currentItemIndex])
+// }

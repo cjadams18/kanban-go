@@ -1,0 +1,55 @@
+{
+	"title": "Test Board",
+	"columns": [
+		{
+			"title": " Backlog ",
+			"cards": [
+				{
+					"title": "Backlog Item 1",
+					"description": "here is a desc",
+					"shortcut": "1"
+				},
+				{
+					"title": "Backlog Item 2",
+					"description": "here is a desc",
+					"shortcut": "2"
+				}
+			]
+		},
+		{
+			"title": " In Progress ",
+			"cards": [
+				{
+					"title": "In Progress 1",
+					"description": "here is a desc",
+					"shortcut": "1"
+				}
+			]
+		},
+		{
+			"title": " Ready for Test ",
+			"cards": [
+				{
+					"title": "Ready for Test 1",
+					"description": "here is a desc",
+					"shortcut": "1"
+				},
+				{
+					"title": "Ready for Test 2",
+					"description": "here is a desc",
+					"shortcut": "2"
+				},
+				{
+					"title": "Ready for Test 3",
+					"description": "here is a desc",
+					"shortcut": "3"
+				},
+				{
+					"title": "Ready for Test 4",
+					"description": "here is a desc",
+					"shortcut": "4"
+				}
+			]
+		}
+	]
+}
