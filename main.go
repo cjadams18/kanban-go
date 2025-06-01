@@ -1,9 +1,13 @@
+// TODO main.go sounds like mango if you say it fast LOL
+
 package main
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"slices"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -97,6 +101,8 @@ func main() {
 		switch event.Rune() {
 		case 'a':
 			addCard(columns[currentFocus])
+		case 'd':
+			deleteCard(columns[currentFocus])
 		case 'h':
 			if currentFocus > 0 {
 				currentFocus--
@@ -123,10 +129,12 @@ func main() {
 				currentFocus++
 				app.SetFocus(columns[currentFocus])
 			}
-		case 'r':
-			deleteCard(columns[currentFocus])
+		case 'p':
+			promoteCard(app, board)
 		case 'q':
 			app.Stop()
+		case 'r':
+			// TODO regress card to previous column
 		}
 		return event
 	})
@@ -145,7 +153,42 @@ func addCard(column *tview.List) {
 	column.AddItem("HARDCODED ADD", "DETAILED DESCRIPTION", '1', nil)
 }
 
-// func moveCard(column *tview.List, adjacentColumn *tview.List) {
-// 	currentItemIndex := column.GetCurrentItem()
-// 	adjacentColumn.AddItem(columns[currentItemIndex])
-// }
+func promoteCard(app *tview.Application, board *tview.Flex) {
+	if currentFocus >= len(columns)-1 {
+		return
+	}
+
+	adjacentList := columns[currentFocus+1]
+
+	list := columns[currentFocus]
+	if list.GetItemCount() == 0 {
+		return
+	}
+
+	index := list.GetCurrentItem()
+
+	cards := boardData.Columns[currentFocus].Cards
+	card := cards[index]
+	boardData.Columns[currentFocus].Cards = slices.Delete(cards, index, index+1)
+
+	list.RemoveItem(index)
+
+	shortcutRune := []rune(card.Shortcut)
+
+	var r rune
+	if len(shortcutRune) > 0 {
+		r = shortcutRune[0]
+	} else {
+		r = 0
+	}
+
+	adjacentList.AddItem(card.Title, card.Description, r, func() {
+		modal := tview.NewModal().SetBackgroundColor(tcell.Color158).SetText(fmt.Sprintf("Title: %s\n\nDescription: %s", card.Title, card.Description)).AddButtons([]string{"Close"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			app.SetRoot(board, true).SetFocus(list)
+		})
+		modal.SetBorder(false)
+		app.SetRoot(modal, true).SetFocus(modal)
+	})
+
+	boardData.Columns[currentFocus+1].Cards = append(boardData.Columns[currentFocus+1].Cards, card)
+}
