@@ -134,7 +134,7 @@ func main() {
 		case 'q':
 			app.Stop()
 		case 'r':
-			// TODO regress card to previous column
+			regressCard(app, board)
 		}
 		return event
 	})
@@ -191,4 +191,44 @@ func promoteCard(app *tview.Application, board *tview.Flex) {
 	})
 
 	boardData.Columns[currentFocus+1].Cards = append(boardData.Columns[currentFocus+1].Cards, card)
+}
+
+func regressCard(app *tview.Application, board *tview.Flex) {
+	if currentFocus == 0 {
+		return
+	}
+
+	adjacentList := columns[currentFocus-1]
+
+	list := columns[currentFocus]
+	if list.GetItemCount() == 0 {
+		return
+	}
+
+	index := list.GetCurrentItem()
+
+	cards := boardData.Columns[currentFocus].Cards
+	card := cards[index]
+	boardData.Columns[currentFocus].Cards = slices.Delete(cards, index, index+1)
+
+	list.RemoveItem(index)
+
+	shortcutRune := []rune(card.Shortcut)
+
+	var r rune
+	if len(shortcutRune) > 0 {
+		r = shortcutRune[0]
+	} else {
+		r = 0
+	}
+
+	adjacentList.AddItem(card.Title, card.Description, r, func() {
+		modal := tview.NewModal().SetBackgroundColor(tcell.Color158).SetText(fmt.Sprintf("Title: %s\n\nDescription: %s", card.Title, card.Description)).AddButtons([]string{"Close"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			app.SetRoot(board, true).SetFocus(list)
+		})
+		modal.SetBorder(false)
+		app.SetRoot(modal, true).SetFocus(modal)
+	})
+
+	boardData.Columns[currentFocus-1].Cards = append(boardData.Columns[currentFocus-1].Cards, card)
 }
