@@ -54,12 +54,7 @@ func loadData() {
 	json.NewDecoder(file).Decode(&boardData)
 }
 
-func main() {
-	loadData()
-
-	app := tview.NewApplication()
-	board := tview.NewFlex().SetDirection(tview.FlexColumn)
-
+func setBoard(app *tview.Application, board *tview.Flex) {
 	for i, col := range boardData.Columns {
 		list := tview.NewList()
 		list.SetBorder(true)
@@ -76,7 +71,7 @@ func main() {
 			}
 
 			list.AddItem(card.Title, card.Description, r, func() {
-				modal := tview.NewModal().SetBackgroundColor(tcell.ColorGrey).SetText(fmt.Sprintf("Title: %s\n\nDescription: %s", card.Title, card.Description)).AddButtons([]string{"Close"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+				modal := tview.NewModal().SetBackgroundColor(tcell.Color158).SetText(fmt.Sprintf("Title: %s\n\nDescription: %s", card.Title, card.Description)).AddButtons([]string{"Close"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 					app.SetRoot(board, true).SetFocus(list)
 				})
 				modal.SetBorder(false)
@@ -88,6 +83,15 @@ func main() {
 
 		columns = append(columns, list)
 	}
+}
+
+func main() {
+	loadData()
+
+	app := tview.NewApplication()
+	board := tview.NewFlex().SetDirection(tview.FlexColumn)
+
+	setBoard(app, board)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
