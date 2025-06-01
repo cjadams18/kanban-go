@@ -103,7 +103,21 @@ func main() {
 				app.SetFocus(columns[currentFocus])
 			}
 		case 'j':
+			list := columns[currentFocus]
+			index := list.GetCurrentItem()
+			if index < list.GetItemCount()-1 {
+				list.SetCurrentItem(index + 1)
+			} else {
+				list.SetCurrentItem(0)
+			}
 		case 'k':
+			list := columns[currentFocus]
+			index := list.GetCurrentItem()
+			if index > 0 {
+				list.SetCurrentItem(index - 1)
+			} else {
+				list.SetCurrentItem(list.GetItemCount() - 1)
+			}
 		case 'l':
 			if currentFocus < len(columns)-1 {
 				currentFocus++
