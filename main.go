@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/gdamore/tcell/v2"
@@ -32,7 +33,6 @@ var currentFocus int = 0
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil || !os.IsNotExist(err)
-
 }
 
 func loadData() {
@@ -75,7 +75,13 @@ func main() {
 				r = 0
 			}
 
-			list.AddItem(card.Title, card.Description, r, nil)
+			list.AddItem(card.Title, card.Description, r, func() {
+				modal := tview.NewModal().SetBackgroundColor(tcell.ColorGrey).SetText(fmt.Sprintf("Title: %s\n\nDescription: %s", card.Title, card.Description)).AddButtons([]string{"Close"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+					app.SetRoot(board, true).SetFocus(list)
+				})
+				modal.SetBorder(false)
+				app.SetRoot(modal, true).SetFocus(modal)
+			})
 		}
 
 		board.AddItem(list, 0, 1, i == 0)
